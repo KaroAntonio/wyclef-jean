@@ -1,5 +1,10 @@
 
 $(document).ready(function() {
+	firebase.auth().onAuthStateChanged(function(user) {
+	  if (!user) {
+	    document.location.href = '/login.html';
+	  }
+	});
 	$('#loading').hide();
 	
 	// app state (global object)
