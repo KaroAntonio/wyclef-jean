@@ -1,4 +1,3 @@
-
 var state;
 
 $(document).ready(function() {
@@ -63,6 +62,13 @@ function init_stroke(state) {
 function create_buttons(state) {
 	// ummm do this better, i mean jk this is untouchable
 
+	panel = $('#control-panel')
+	if (panel.length != 0) 
+	{
+		$('#picker').appendTo('body')
+		panel.remove()
+	}
+
 	var control_panel = $('<div>');
 	control_panel.attr('id','control-panel')
 	$('body').append(control_panel)
@@ -104,7 +110,6 @@ function create_buttons(state) {
 	})
 
 	var picker = $('#picker')
-
 	picker.css({'width':42})
 	picker.appendTo($('#color-button'))
 
@@ -174,6 +179,8 @@ function update_window(state) {
 		'width':state.w-40,
 		'height':state.h-40
 	})
+	
+	create_buttons(state)
 }
 
 function load_strokes(state) {
