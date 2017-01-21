@@ -17,18 +17,112 @@ $(document).ready(function() {
 		'pointer':'up',
 		'curr_stroke':[],
 		'stroke_paths':[],
-		'strokes':[]
+		'strokes':[],
+		'mode':'draw',
+		'lat':43.657283,
+		'lng':-79.395747
 	}
 
-	map = init_map(state)
-	
-	// DISABLE DRAGGING
-	map.setOptions({draggable: false, zoomControl: false, scrollwheel: false, disableDoubleClickZoom: true, clickableIcons: false});
+	update_window(state);
+	create_buttons(state);
+
+	$(window).resize(function() {
+		update_window(state);
+	})
+
+	map = init_map(state);
+
 
 	load_strokes(state);
 	update_strokes(state);
 
 })
+
+function create_buttons(state) {
+	// ummm do this better, i mean jk this is untouchable
+
+	var control_panel = $('<div>');
+	var draw_button = $('<div>');
+	var move_button = $('<div>');
+
+	control_panel.attr('id','control-panel')
+	draw_button.attr('id','draw-button')
+	move_button.attr('id','move-button')
+
+	control_panel.append(draw_button)
+	control_panel.append(move_button)
+
+	$('body').append(control_panel)
+	
+	control_panel.css({
+		'position':'fixed',
+		'left':20,
+		'top':state.h/2 - 100
+	})
+
+	$('#move-button, #draw-button').css({
+		'width':50,
+		'height':50,
+		'opacity':0.3,
+		'color':'white',
+		'background':'black',
+		'text-align':'center'
+	})
+	draw_button.css({
+		'opacity':1
+	})
+
+	move_button.text('move')
+	draw_button.text('draw')
+
+	move_button.click(function() {
+		state.mode = 'move'	
+		state.pointer = 'up'
+		move_button.css({
+			'opacity':1
+		})
+		draw_button.css({
+			'opacity':0.3
+		})
+		map.setOptions({
+			draggable: true, 
+			zoomControl: true, 
+			scrollwheel: true, 
+			disableDoubleClickZoom: false, 
+			clickableIcons: true
+		});
+	})
+
+	draw_button.click(function() {
+		state.mode = 'draw'	
+		state.pointer = 'up'
+		move_button.css({
+			'opacity':0.3
+		})
+		draw_button.css({
+			'opacity':1
+		})
+		map.setOptions({
+			draggable: false, 
+			zoomControl: false, 
+			scrollwheel: false, 
+			disableDoubleClickZoom: true, 
+			clickableIcons: false
+		});
+	})
+}
+
+function update_window(state) {
+	state['w'] = window.innerWidth;
+	state['h'] = window.innerHeight
+
+	$("#map-container").css({
+		'margin':'20px',
+		'width':state.w-40,
+		'height':state.h-40
+	})
+
+}
 
 function load_strokes(state) {
 	// LOAD STROKES
@@ -46,24 +140,56 @@ function init_map(state) {
 		}
 	];
 
+	if (navigator.geolocation) {
+		// geolocation is available
+		navigator.geolocation.getCurrentPosition(
+			geo_success,
+			geo_error,
+			{maximumAge:600000, timeout:10000})
+		
+		function geo_success(pos){
+			state.lat = pos.coords.latitude
+			state.lng = pos.coords.longitude
+			state.map.setOptions({
+				center:new google.maps.LatLng(state.lat, state.lng)
+			})
+		}
+
+		function geo_error(err) {
+			// TODO make a better error
+			alert('GEO LOCATION ERROR');
+			console.log(err);
+		}
+	} 
+	else {
+		console.log('NO GEOLOCATION')
+		// geolocation is not supported
+	}
+
+
 	var mapOptions = {
-		center:new google.maps.LatLng(43.657283,-79.395747), zoom:15,
+		center:new google.maps.LatLng(state.lat, state.lng), zoom:15,
 		mapTypeId:google.maps.MapTypeId.ROADMAP,
 		styles: myStyles	
 	};
 		
-	var map = new google.maps.Map(document.getElementById("sample"),mapOptions);
-	state['map'] = map
+	var map = new google.maps.Map(document.getElementById("map-container"),mapOptions);
+	state['map'] = map;
 
 	map.addListener('click',function(e) { console.log('click') } );
-	map.addListener('mouseup',function(e) { finish_stroke(state) } )
+	map.addListener('mouseup',function(e) { finish_stroke(state) } );
 	map.addListener('mousedown',function(e) { state['pointer'] = 'down'; update_strokes(state) } )
 	map.addListener('mousemove',function(e) { build_stroke(state,e); update_strokes(state) } )
+
+	map.setOptions({draggable: false, zoomControl: false, scrollwheel: false, disableDoubleClickZoom: true, clickableIcons: false});
 
 	return map
 }
 
 function finish_stroke(state) {
+
+	if (state.mode != 'draw') return;
+	
 	// Finish building stroke
 	var curr_stroke = state.curr_stroke;
 	state.stroke_paths.push(state.curr_stroke);
@@ -82,7 +208,6 @@ function finish_stroke(state) {
 	}
 	
 	// Post stroke	
-	console.log(stroke_data);
 	/*
 	$.post(
 		'url',
@@ -94,8 +219,7 @@ function finish_stroke(state) {
 }
 
 function build_stroke(state,e) {
-
-	if (state.pointer == 'down') {
+	if (state.pointer == 'down' && state.mode == 'draw') {
 		state.curr_stroke.push({lat: e.latLng.lat(), lng: e.latLng.lng()})
 	}
 }
@@ -130,5 +254,4 @@ function draw_stroke(state, path_coords) {
 
 	path.setMap(state.map);
 }
-
 
