@@ -37,24 +37,29 @@ function create_buttons(state) {
 	// ummm do this better, i mean jk this is untouchable
 
 	var control_panel = $('<div>');
-	var draw_button = $('<div>');
-	var move_button = $('<div>');
-
 	control_panel.attr('id','control-panel')
-	draw_button.attr('id','draw-button')
-	move_button.attr('id','move-button')
-
-	control_panel.append(draw_button)
-	control_panel.append(move_button)
-
 	$('body').append(control_panel)
-	
+
 	control_panel.css({
 		'position':'fixed',
 		'left':20,
 		'top':state.h/2 - 100
 	})
 
+
+	var button_infos = [
+		['draw',draw_click],
+		['move',move_click],
+		['center',center_click]
+	]
+	
+	button_info.forEach(function(info) {
+		var button = $('<div>')
+		button.attr('id',info[0]+'-button')
+		control_panel.append(button)
+		
+	})
+	
 	$('#move-button, #draw-button').css({
 		'width':50,
 		'height':50,
@@ -70,7 +75,7 @@ function create_buttons(state) {
 	move_button.text('move')
 	draw_button.text('draw')
 
-	move_button.click(function() {
+	function move_click() {
 		state.mode = 'move'	
 		state.pointer = 'up'
 		move_button.css({
@@ -86,9 +91,9 @@ function create_buttons(state) {
 			disableDoubleClickZoom: false, 
 			clickableIcons: true
 		});
-	})
+	}
 
-	draw_button.click(function() {
+	function draw_click() {
 		state.mode = 'draw'	
 		state.pointer = 'up'
 		move_button.css({
@@ -104,7 +109,7 @@ function create_buttons(state) {
 			disableDoubleClickZoom: true, 
 			clickableIcons: false
 		});
-	})
+	}
 }
 
 function update_window(state) {
