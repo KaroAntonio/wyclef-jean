@@ -18,7 +18,7 @@ $(document).ready(function() {
 	map = init_map(state)
 	
 	// DISABLE DRAGGING
-	map.setOptions({draggable: false, zoomControl: false, scrollwheel: false, disableDoubleClickZoom: true});
+	map.setOptions({draggable: false, zoomControl: false, scrollwheel: false, disableDoubleClickZoom: true, clickableIcons: false});
 
 	load_strokes(state);
 	update_strokes(state);
