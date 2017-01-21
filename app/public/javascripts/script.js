@@ -1,4 +1,6 @@
 
+var state;
+
 $(document).ready(function() {
 	firebase.auth().onAuthStateChanged(function(user) {
 	  if (!user) {
@@ -12,31 +14,51 @@ $(document).ready(function() {
 		'tags':['kanye was here'],
 		'stroke_type':'solid',
 		'user_id':0,
-		'stroke_color':'#FF0000',
+		'stroke_color':'#000000',
 		'stroke_weight':2,
 		'pointer':'up',
-		'curr_stroke':[],
-		'stroke_paths':[],
-		'strokes':[],
+		'stroke_paths':[],  // data for strokes
+		'strokes':[],  // references to gmaps strokes
 		'mode':'draw',
 		'lat':43.657283,
-		'lng':-79.395747
+		'lng':-79.395747,
+		'rad':0.002
 	}
 
 	update_window(state);
-	create_buttons(state);
 
 	$(window).resize(function() {
 		update_window(state);
 	})
 
 	map = init_map(state);
-
+	create_buttons(state);
+	state['curr_stroke'] = init_stroke(state)
 
 	load_strokes(state);
 	update_strokes(state);
 
 })
+
+function extract_tag(state) {
+	// extract the tag from the input 
+	var tag = $('#tag-input').val().trim()
+	if (tag.length == 0) {
+		tag = 'none'
+	}
+	return tag
+}
+
+function init_stroke(state) {
+	return {
+		'user_id':state.user_id,
+		'path':[],
+		'tags':[extract_tag(state)],
+		'color':state.stroke_color,
+		'weight':state.stroke_weight,
+		'type':state.stroke_type
+	}
+}
 
 function create_buttons(state) {
 	// ummm do this better, i mean jk this is untouchable
@@ -46,47 +68,66 @@ function create_buttons(state) {
 	$('body').append(control_panel)
 
 	control_panel.css({
+		cursor:'pointer',
 		'position':'fixed',
 		'left':20,
 		'top':state.h/2 - 100
 	})
 
-
 	var button_infos = [
 		['draw',draw_click],
 		['move',move_click],
+		['color',null],
+		['tag',null],
 		['center',center_click]
 	]
 	
-	button_info.forEach(function(info) {
+	button_infos.forEach(function(info) {
 		var button = $('<div>')
 		button.attr('id',info[0]+'-button')
 		control_panel.append(button)
+		button.css({
+			'width':50,
+			'height':50,
+			'opacity':0.3,
+			'color':'white',
+			'background':'black',
+			'text-align':'center'
+		})
+		button.text(info[0])
+		button.click(info[1])
 		
 	})
 	
-	$('#move-button, #draw-button').css({
-		'width':50,
-		'height':50,
-		'opacity':0.3,
-		'color':'white',
-		'background':'black',
-		'text-align':'center'
-	})
-	draw_button.css({
+	$('#draw-button').css({
 		'opacity':1
 	})
 
-	move_button.text('move')
-	draw_button.text('draw')
+	var picker = $('#picker')
+
+	picker.css({'width':42})
+	picker.appendTo($('#color-button'))
+
+	function center_click() {
+		state.map.setOptions({
+			center:new google.maps.LatLng(state.lat, state.lng)
+		})
+	}
+
+	var tag_input = $('<input>')
+	tag_input.attr({'id':'tag-input'})
+	$('#tag-button').append(tag_input)
+	tag_input.css({
+		width:42,
+	})
 
 	function move_click() {
 		state.mode = 'move'	
 		state.pointer = 'up'
-		move_button.css({
+		$('#move-button').css({
 			'opacity':1
 		})
-		draw_button.css({
+		$('#draw-button').css({
 			'opacity':0.3
 		})
 		map.setOptions({
@@ -101,10 +142,10 @@ function create_buttons(state) {
 	function draw_click() {
 		state.mode = 'draw'	
 		state.pointer = 'up'
-		move_button.css({
+		$('#move-button').css({
 			'opacity':0.3
 		})
-		draw_button.css({
+		$('#draw-button').css({
 			'opacity':1
 		})
 		map.setOptions({
@@ -117,6 +158,13 @@ function create_buttons(state) {
 	}
 }
 
+
+function update_color(jscolor) {
+	console.log(jscolor)
+	state.stroke_color = '#' + jscolor
+}
+
+
 function update_window(state) {
 	state['w'] = window.innerWidth;
 	state['h'] = window.innerHeight
@@ -126,7 +174,6 @@ function update_window(state) {
 		'width':state.w-40,
 		'height':state.h-40
 	})
-
 }
 
 function load_strokes(state) {
@@ -162,7 +209,7 @@ function init_map(state) {
 
 		function geo_error(err) {
 			// TODO make a better error
-			alert('GEO LOCATION ERROR');
+			console.log('GEO LOCATION ERROR');
 			console.log(err);
 		}
 	} 
@@ -171,9 +218,8 @@ function init_map(state) {
 		// geolocation is not supported
 	}
 
-
 	var mapOptions = {
-		center:new google.maps.LatLng(state.lat, state.lng), zoom:15,
+		center:new google.maps.LatLng(state.lat, state.lng), zoom:18,
 		mapTypeId:google.maps.MapTypeId.ROADMAP,
 		styles: myStyles	
 	};
@@ -181,7 +227,7 @@ function init_map(state) {
 	var map = new google.maps.Map(document.getElementById("map-container"),mapOptions);
 	state['map'] = map;
 
-	map.addListener('click',function(e) { console.log('click') } );
+	map.addListener('click',function(e) { } );
 	map.addListener('mouseup',function(e) { finish_stroke(state) } );
 	map.addListener('mousedown',function(e) { state['pointer'] = 'down'; update_strokes(state) } )
 	map.addListener('mousemove',function(e) { build_stroke(state,e); update_strokes(state) } )
@@ -197,19 +243,20 @@ function finish_stroke(state) {
 	
 	// Finish building stroke
 	var curr_stroke = state.curr_stroke;
+	if (curr_stroke.path.length == 0) return;
 	state.stroke_paths.push(state.curr_stroke);
-	state.curr_stroke = []
+	state.curr_stroke = init_stroke(state)
 	state['pointer'] = 'up';
 
 	// Build stroke pkg
 	var stroke_data = {
-		'path_coords':curr_stroke,
-		'stroke_type':state.stroke_type,
-		'tags':state.tags,
-		'author_id':state.user_id,
+		'path_coords':curr_stroke.path,
+		'stroke_type':curr_stroke.type,
+		'tags':curr_stroke.tags,
+		'author_id':curr_stroke.user_id,
 		'timestamp':Date.now(),
-		'stroke_color':state.stroke_color,
-		'stroke_weight':state.stroke_weight
+		'stroke_color':curr_stroke.color,
+		'stroke_weight':curr_stroke.weight
 	}
 	
 	// Post stroke	
@@ -224,9 +271,20 @@ function finish_stroke(state) {
 }
 
 function build_stroke(state,e) {
-	if (state.pointer == 'down' && state.mode == 'draw') {
-		state.curr_stroke.push({lat: e.latLng.lat(), lng: e.latLng.lng()})
+	lat = e.latLng.lat()
+	lng = e.latLng.lng()
+	d = distance(lat,lng,state.lat, state.lng)
+	if (state.pointer == 'down' && state.mode == 'draw' && d < state.rad) {
+		state.curr_stroke.path.push({lat: lat, lng: lng})
 	}
+	if (d >= state.rad) {
+		// end the current stroke if you draw beyond the edge of the boundary
+		finish_stroke(state)
+	}
+}
+
+function distance(x1, y1, x2, y2) {
+	return Math.pow(Math.pow(x2-x1,2)+Math.pow(y2-y1,2),0.5)
 }
 
 function update_strokes(state) {
@@ -244,15 +302,14 @@ function update_strokes(state) {
 	draw_stroke(state,state.curr_stroke)
 }
 
-function draw_stroke(state, path_coords) {
+function draw_stroke(state, stroke) {
 	var path = new google.maps.Polyline({
 		clickable:false,
-		path: path_coords,
+		path: stroke.path,
 		geodesic: true,
-		strokeColor: state.stroke_color,
+		strokeColor: stroke.color,
 		strokeOpacity: 1.0,
-		strokeWeight: state.stroke_weight
-
+		strokeWeight: stroke.weight
 	});
 
 	state.strokes.push(path)	

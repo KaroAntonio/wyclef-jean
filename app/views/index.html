@@ -3,17 +3,22 @@
   <head>
     <meta charset="utf-8">
     <title>wyclef jean</title>
-    <link rel="stylesheet" href="stylesheets/style.css">
+	<link rel="stylesheet" href="stylesheets/style.css">
+	<link rel='stylesheet' href='stylesheets/spectrum.css' />
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<script src = "https://maps.googleapis.com/maps/api/js"></script>
   </head>
   <body>
 	  <img id='loading' src='images/loading.gif'>
 	  <div id = "map-container"></div>
+	  <input id="picker" class="jscolor" onchange="update_color(this.jscolor)" value="000000">
   </body>
 
   <!-- top button -->
   <script src="https://www.gstatic.com/firebasejs/3.6.6/firebase.js"></script>
+
+  <script src='javascripts/jscolor.js'></script> 
+  <script src='javascripts/spectrum.js'></script> 
   <script src="javascripts/config.js"></script>
   <script src="javascripts/universal-home.js"></script>
   <script src="javascripts/script.js"></script>
