@@ -4,23 +4,19 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.location.Location;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
-import com.example.vickybilbily.wyclef_map.CanvasView;
-
+import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -28,19 +24,18 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
-import com.google.android.gms.maps.model.Circle;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import petrov.kristiyan.colorpicker.ColorPicker;
@@ -101,6 +96,23 @@ public class MapsActivity extends FragmentActivity implements
         setupColorPicker();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() != null) {
+            // already signed in
+        } else {
+            startActivityForResult(
+                    AuthUI.getInstance()
+                            .createSignInIntentBuilder()
+                            .setProviders(Arrays.asList(new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
+                                    new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build()))
+                            .build(),
+                    1);
+        }
+    }
+
     /**
      * Map setup on map ready
      */
@@ -119,13 +131,13 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     protected void onStart() {
-        mGoogleApiClient.connect();
         super.onStart();
+        mGoogleApiClient.connect();
     }
 
     protected void onStop() {
-        mGoogleApiClient.disconnect();
         super.onStop();
+        mGoogleApiClient.disconnect();
     }
 
     @Override
@@ -223,7 +235,7 @@ public class MapsActivity extends FragmentActivity implements
         });
     }
 
-    public void enableDrawing(){
+    public void enableDrawing() {
         View canvas = findViewById(R.id.touchme);
         mProjection = mMap.getProjection();
         canvas.setVisibility(View.VISIBLE);
@@ -233,7 +245,7 @@ public class MapsActivity extends FragmentActivity implements
         settings.setMyLocationButtonEnabled(false);
     }
 
-    public void enableMoving(){
+    public void enableMoving() {
         View canvas = findViewById(R.id.touchme);
         canvas.setVisibility(View.GONE);
         UiSettings settings = mMap.getUiSettings();
@@ -243,7 +255,7 @@ public class MapsActivity extends FragmentActivity implements
         settings.setMyLocationButtonEnabled(true);
     }
 
-    public void setupColorPicker(){
+    public void setupColorPicker() {
         View colorBtn = findViewById(R.id.colors);
         colorBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -251,17 +263,17 @@ public class MapsActivity extends FragmentActivity implements
                 mColorPicker = new ColorPicker(MapsActivity.this);
                 mColorPicker.setOnChooseColorListener(new ColorPicker.OnChooseColorListener() {
                     @Override
-                    public void onChooseColor(int position,int color) {
+                    public void onChooseColor(int position, int color) {
                         mColor = color;
                     }
 
                     @Override
-                    public void onCancel(){
+                    public void onCancel() {
                         // put code
                     }
                 });
-               mColorPicker.show();
-        }
+                mColorPicker.show();
+            }
         });
     }
 
