@@ -147,8 +147,14 @@ public class MapsActivity extends FragmentActivity implements
         switch (requestCode) {
             case 1: {
                 // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    handleLocation();
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                    if (location == null) {
+                        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+                    } else {
+                        handleLocation();
+                    }
                 }
                 return;
             }
@@ -161,11 +167,13 @@ public class MapsActivity extends FragmentActivity implements
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         }
-        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (location == null) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        } else {
-            handleLocation();
+        else {
+            Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            if (location == null) {
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+            } else {
+                handleLocation();
+            }
         }
 
     }
