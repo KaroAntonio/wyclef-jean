@@ -4,7 +4,7 @@ var geoFire = new GeoFire(database.ref('stroke_geo'));
 function saveStroke(stroke) {
     var user = firebase.auth().currentUser;
     if (user) {
-        var strokesRef = database.ref('users/' + user.uid + '/strokes').push(stroke);
+        var strokesRef = database.ref('strokes').push(stroke);
 
         var strokeId = strokesRef.key;
         var coords = stroke.path_coords.map(locToArr);
@@ -26,7 +26,7 @@ function subscribeToStrokes(loc, listener) {
     if (geoQuery) {
         geoQuery.cancel();
     }
-    
+
     geoQuery = geoFire.query({
         center: locToArr(loc),
         radius: loc.rad * (40076 / 360)
@@ -38,10 +38,8 @@ function subscribeToStrokes(loc, listener) {
     geoQuery.on("key_entered", function(key, location, distance) {
         var strokeId = key.substr(0, key.lastIndexOf('-'));
         if (!strokesRecieved.includes(strokeId)) {
-            var user = firebase.auth().currentUser;
-            var strokeRef = database.ref('users/' + user.uid + '/strokes/' + strokeId);
+            var strokeRef = database.ref('strokes/' + strokeId);
             strokeRef.on('value', function(snapshot){
-                //console.log(strokeId);
                 listener(snapshot.val());
             });
         }

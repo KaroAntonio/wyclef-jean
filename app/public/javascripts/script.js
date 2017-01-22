@@ -233,9 +233,7 @@ function update_geolocation(state, center_on_success) {
 			if (center_on_success) 
 				center_map(state)
 			
-			subscribeToStrokes(state, function(stroke) {
-				//console.log(stroke);
-			});
+			subscribeToStrokes(state, add_stroke);
 		}
 
 		function geo_error(err) {
@@ -301,12 +299,13 @@ function finish_stroke(state) {
 
 	// Build stroke pkg
 	var stroke_data = {
-		'path_coords':curr_stroke.path,
-		'stroke_type':curr_stroke.type,
-		'tags':curr_stroke.tags,
-		'timestamp':Date.now(),
-		'stroke_color':curr_stroke.color,
-		'stroke_weight':curr_stroke.weight
+		'path_coords': curr_stroke.path,
+		'stroke_type': curr_stroke.type,
+		'tags': curr_stroke.tags,
+		'user_id': curr_stroke.user_id,
+		'timestamp': Date.now(),
+		'stroke_color': curr_stroke.color,
+		'stroke_weight': curr_stroke.weight
 	}
 	update_strokes(state)
 	//saveStroke(stroke_data);		
