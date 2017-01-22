@@ -7,6 +7,7 @@ $(document).ready(function() {
 
 		// app state (global object)
 		state = {
+			'initialized':false,
 			'update_locked':false,
 			'tags':['kanye was here'],
 			'stroke_type':'solid',
@@ -17,7 +18,7 @@ $(document).ready(function() {
 			'stroke_paths':{},  // data for strokes
 			'strokes':{},  // references to gmaps strokes
 			'mode':'draw',
-			'lat':43.657283,
+			'lat':40.657283,
 			'lng':-79.395747,
 			'rad':0.002,
 			'd_buff':0.0005  // the tolerance on how much you have to move before a redraw is triggered
@@ -215,7 +216,6 @@ function add_stroke(stroke) {
 			state.stroke_paths[stroke.id] = stroke
 			update_strokes(state);
 		}
-		console.log(obj_len(state.stroke_paths))
 	} else {
 		console.log('received stroke is null!')
 	}
@@ -238,11 +238,14 @@ function update_geolocation(state, center_on_success) {
 
 				// only update if the distance moved is greater than the move tolerance
 				if ( d > state.d_buff ) {
-					if (center_on_success) 
-						center_map(state)
 					
 					state.lat = pos.coords.latitude
 					state.lng = pos.coords.longitude
+
+					if (center_on_success || !state.initialized) 
+						center_map(state)
+					console.log('init: '+state.initialized)
+					state.initialized = true
 
 					subscribeToStrokes(state, add_stroke);
 					state['update_locked'] = true
@@ -367,7 +370,6 @@ function update_strokes(state) {
 			n_redrawn += 1
 		}
 	}
-	console.log('n_redrawn '+n_redrawn)
 	draw_stroke(state,state.curr_stroke)
 }
 
