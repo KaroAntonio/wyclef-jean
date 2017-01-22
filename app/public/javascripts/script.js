@@ -195,7 +195,9 @@ function build_buttons(state) {
 
 function update_color(jscolor) {
 	state.stroke_color = '#' + jscolor
+	state.curr_stroke.color = state.stroke_color
 }
+
 
 function update_window(state) {
 	state['w'] = window.innerWidth;
