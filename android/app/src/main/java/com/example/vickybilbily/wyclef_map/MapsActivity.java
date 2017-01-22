@@ -103,13 +103,12 @@ public class MapsActivity extends FragmentActivity implements
         if (auth.getCurrentUser() != null) {
             // already signed in
         } else {
-            startActivityForResult(
+            startActivity(
                     AuthUI.getInstance()
                             .createSignInIntentBuilder()
                             .setProviders(Arrays.asList(new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
                                     new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build()))
-                            .build(),
-                    1);
+                            .build());
         }
     }
 
