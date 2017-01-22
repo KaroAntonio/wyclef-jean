@@ -29,7 +29,7 @@ function getStrokes(loc, radius) {
         console.log("GeoQuery has loaded and fired all other events for initial data");
     });
     geoQuery.on("key_entered", function(key, location, distance) {
-        console.log(key + " entered query at " + location + " (" + distance + " km from center)");
+        // console.log(key + " entered query at " + location + " (" + distance + " km from center)");
     });
 }
 
