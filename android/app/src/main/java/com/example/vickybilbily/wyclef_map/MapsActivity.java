@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
@@ -42,6 +43,8 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.util.ArrayList;
 import java.util.List;
 
+import petrov.kristiyan.colorpicker.ColorPicker;
+
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
@@ -55,9 +58,10 @@ public class MapsActivity extends FragmentActivity implements
     private LocationRequest mLocationRequest;
     private Projection mProjection;
     private List<Polyline> mPolylineList;
-    private Polyline mPolyline;
     private PolylineOptions mPolylineOptions;
     private List<Stroke> mStrokeList;
+    private int mColor;
+    private ColorPicker mColorPicker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,11 +87,36 @@ public class MapsActivity extends FragmentActivity implements
                 .setFastestInterval(1 * 1000); // 1 second, in milliseconds
 
         // Request permission for location
-        ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            handleLocation();
+        }
 
         //Instantiate some stuff
         mPolylineList = new ArrayList<Polyline>();
         mStrokeList = new ArrayList<Stroke>();
+        mColor = Color.RED;
+        CanvasView canvas = (CanvasView) findViewById(R.id.touchme);
+        canvas.setMotionListener(this);
+        canvas.setVisibility(View.VISIBLE);
+        setupColorPicker();
+    }
+
+    /**
+     * Map setup on map ready
+     */
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        //No gestures enabled by default
+        UiSettings mapSettings = mMap.getUiSettings();
+        mapSettings.setAllGesturesEnabled(false);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+        mProjection = mMap.getProjection();
+        setupRadio();
     }
 
     protected void onStart() {
@@ -100,61 +129,24 @@ public class MapsActivity extends FragmentActivity implements
         super.onStop();
     }
 
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     */
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-        Log.d("action", "do you work???");
-        mMap = googleMap;
-        //No gestures enabled by default
-        UiSettings mapSettings = mMap.getUiSettings();
-        mapSettings.setAllGesturesEnabled(false);
-        CanvasView canvas = (CanvasView) findViewById(R.id.touchme);
-        canvas.setMotionListener(this);
-        mProjection = mMap.getProjection();
-        setupRadio();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case 1: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
                 }
                 return;
             }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
         }
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         }
         Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (location == null) {
@@ -186,6 +178,96 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     @Override
+    public void onDown(MotionEvent event) {
+        LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
+        mPolylineOptions = new PolylineOptions()
+                .add(position)
+                .color(mColor)
+                .width(10);
+        mPolylineList.add(mMap.addPolyline(mPolylineOptions));
+        //mMap.addCircle(new CircleOptions().center(position).radius(10));
+    }
+
+    @Override
+    public void onMove(MotionEvent event) {
+        LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
+        mPolylineOptions.add(position);
+        mPolylineList.add(mMap.addPolyline(mPolylineOptions));
+        //mMap.addCircle(new CircleOptions().center(position).radius(10));
+    }
+
+    @Override
+    public void onUp(MotionEvent event) {
+        LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
+        mPolylineOptions.add(position);
+        Polyline newLine = mMap.addPolyline(mPolylineOptions);
+        mPolylineList.clear();
+        mStrokeList.add(new Stroke(mPolylineOptions, "currentUid"));
+    }
+
+    public void setupRadio() {
+        RadioGroup rg = (RadioGroup) findViewById(R.id.modes);
+        RadioButton drawBtn = (RadioButton) findViewById(R.id.draw);
+        drawBtn.setChecked(true);
+        rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                switch (checkedId) {
+                    case R.id.draw:
+                        enableDrawing();
+                        break;
+                    case R.id.move:
+                        enableMoving();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+    }
+
+    public void enableDrawing(){
+        View canvas = findViewById(R.id.touchme);
+        mProjection = mMap.getProjection();
+        canvas.setVisibility(View.VISIBLE);
+        UiSettings settings = mMap.getUiSettings();
+        settings.setAllGesturesEnabled(false);
+        settings.setZoomControlsEnabled(false);
+        settings.setMyLocationButtonEnabled(false);
+    }
+
+    public void enableMoving(){
+        View canvas = findViewById(R.id.touchme);
+        canvas.setVisibility(View.GONE);
+        UiSettings settings = mMap.getUiSettings();
+        settings.setAllGesturesEnabled(true);
+        settings.setZoomControlsEnabled(true);
+        settings.setScrollGesturesEnabled(true);
+        settings.setMyLocationButtonEnabled(true);
+    }
+
+    public void setupColorPicker(){
+        View colorBtn = findViewById(R.id.colors);
+        colorBtn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                //v.getParent().removeView();
+                mColorPicker = new ColorPicker(MapsActivity.this);
+                mColorPicker.setOnChooseColorListener(new ColorPicker.OnChooseColorListener() {
+                    @Override
+                    public void onChooseColor(int position,int color) {
+                        mColor = color;
+                    }
+
+                    @Override
+                    public void onCancel(){
+                        // put code
+                    }
+                });
+               mColorPicker.show();
+        }
+        });
+    }
+
+    @Override
     public void onConnectionSuspended(int i) {
 
     }
@@ -200,60 +282,4 @@ public class MapsActivity extends FragmentActivity implements
         handleLocation();
     }
 
-
-    @Override
-    public void onDown(MotionEvent event){
-        LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
-        mPolylineOptions = new PolylineOptions()
-                .add(position)
-                .color(Color.RED)
-                .width(10);
-        mPolylineList.add(mMap.addPolyline(mPolylineOptions));
-        //mMap.addCircle(new CircleOptions().center(position).radius(10));
-    }
-
-    @Override
-    public void onMove(MotionEvent event){
-        LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
-        mPolylineOptions.add(position);
-        mPolylineList.add(mMap.addPolyline(mPolylineOptions));
-        //mMap.addCircle(new CircleOptions().center(position).radius(10));
-    }
-
-    @Override
-    public void onUp(MotionEvent event){
-        //TODO create stroke! and clear all other polylines
-        LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
-        mPolylineOptions.add(position);
-        Polyline newLine = mMap.addPolyline(mPolylineOptions);
-        mPolylineList.clear();
-        mStrokeList.add(new Stroke(mPolylineOptions, "currentUid"));
-    }
-
-    public void setupRadio(){
-        RadioGroup rg = (RadioGroup) findViewById(R.id.modes);
-        RadioButton drawBtn = (RadioButton) findViewById(R.id.draw);
-        drawBtn.setChecked(true);
-        final View canvas = findViewById(R.id.touchme);
-        rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener()
-        {
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                switch(checkedId){
-                    case R.id.draw:
-                        mProjection = mMap.getProjection();
-                        canvas.setVisibility(View.VISIBLE);
-                        mMap.getUiSettings().setAllGesturesEnabled(false);
-                        break;
-                    case R.id.move:
-                        canvas.setVisibility(View.GONE);
-                        mMap.getUiSettings().setAllGesturesEnabled(true);
-                        mMap.getUiSettings().setZoomControlsEnabled(true);
-                        mMap.getUiSettings().setScrollGesturesEnabled(true);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
-    }
 }

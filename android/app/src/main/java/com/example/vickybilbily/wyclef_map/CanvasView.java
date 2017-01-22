@@ -14,8 +14,7 @@ import android.view.View;
  */
 
 public class CanvasView extends View {
-
-    private String DEBUG_TAG = "action";
+    
     private MotionListener listener;
 
     public CanvasView(Context context, AttributeSet attrs) {
@@ -33,15 +32,12 @@ public class CanvasView extends View {
         if (this.listener != null) {
             switch (action) {
                 case (MotionEvent.ACTION_DOWN):
-                    Log.d(DEBUG_TAG, "Action was DOWN");
                     listener.onDown(event);
                     return true;
                 case (MotionEvent.ACTION_MOVE):
-                    Log.d(DEBUG_TAG, "Action was MOVE");
                     listener.onMove(event);
                     return true;
                 case (MotionEvent.ACTION_UP):
-                    Log.d(DEBUG_TAG, "Action was UP");
                     listener.onUp(event);
                     return true;
                 default:
