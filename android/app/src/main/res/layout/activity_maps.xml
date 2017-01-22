@@ -36,7 +36,7 @@
             android:id="@+id/colors" />
 
         <Button
-            android:text="Button"
+            android:text="Undo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/undo" />
