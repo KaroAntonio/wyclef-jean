@@ -23,7 +23,7 @@ function saveStroke(stroke) {
 function getStrokes(loc, radius) {
     var geoQuery = geoFire.query({
         center: locToArr(loc),
-        radius: radius
+        radius: radius * (40076 / 360)
     });
     geoQuery.on("ready", function() {
         console.log("GeoQuery has loaded and fired all other events for initial data");
