@@ -418,9 +418,11 @@ function build_stroke_path(state,stroke) {
 }
 
 function draw_stroke(state, stroke) {
-	path = build_stroke_path(state,stroke)
-	state.strokes[stroke.id] = path
-	path.setMap(state.map);
+	if (stroke.timestamp > 1485104593) {
+		path = build_stroke_path(state,stroke)
+		state.strokes[stroke.id] = path
+		path.setMap(state.map);
+	}
 }
 
 function obj_len(obj) {
