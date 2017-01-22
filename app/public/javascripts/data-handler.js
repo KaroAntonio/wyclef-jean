@@ -38,6 +38,7 @@ function subscribeToStrokes(loc, listener) {
     geoQuery.on("key_entered", function(key, location, distance) {
         var strokeId = key.substr(0, key.lastIndexOf('-'));
         if (!strokesRecieved.includes(strokeId)) {
+            strokesRecieved.push(strokeId);
             var strokeRef = database.ref('strokes/' + strokeId);
             strokeRef.on('value', function(snapshot){
                 listener(snapshot.val());
