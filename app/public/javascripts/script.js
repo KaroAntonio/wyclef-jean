@@ -369,8 +369,6 @@ function build_stroke_path(state,stroke) {
 		strokeOpacity: 1.0,
 		strokeWeight: stroke.weight
 	});
-
-
 }
 
 function draw_stroke(state, stroke) {
