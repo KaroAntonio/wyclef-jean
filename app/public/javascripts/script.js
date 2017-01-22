@@ -31,7 +31,7 @@ $(document).ready(function() {
 	})
 
 	map = init_map(state);
-	create_buttons(state);
+	build_buttons(state);
 	state['curr_stroke'] = init_stroke(state)
 
 	load_strokes(state);
@@ -48,6 +48,29 @@ function extract_tag(state) {
 	return tag
 }
 
+function build_slider(state) {
+	
+	$('.nstSlider').nstSlider({
+		"left_grip_selector": ".leftGrip",
+		"right_grip_selector": ".rightGrip",
+		"value_bar_selector": ".bar",
+		"value_changed_callback": function(cause, leftValue, rightValue) {
+					var $container = $(this).parent();
+					$container.find('.leftLabel').text(leftValue);
+					$container.find('.rightLabel').text(rightValue);
+				},
+		"highlight": {
+			"grip_class": "gripHighlighted",
+			"panel_selector": ".highlightPanel"
+		}
+	});
+	$('#highlightRangeButton').click(function() {
+			var highlightMin = Math.random() * 20,
+				highlightMax = highlightMin + Math.random() * 80;
+		$('.nstSlider').nstSlider('highlight_range', highlightMin, highlightMax);
+	});
+}
+
 function init_stroke(state) {
 	return {
 		'user_id':state.user_id,
@@ -59,7 +82,7 @@ function init_stroke(state) {
 	}
 }
 
-function create_buttons(state) {
+function build_buttons(state) {
 	// ummm do this better, i mean jk this is untouchable
 
 	panel = $('#control-panel')
@@ -163,12 +186,10 @@ function create_buttons(state) {
 	}
 }
 
-
 function update_color(jscolor) {
 	console.log(jscolor)
 	state.stroke_color = '#' + jscolor
 }
-
 
 function update_window(state) {
 	state['w'] = window.innerWidth;
@@ -180,7 +201,7 @@ function update_window(state) {
 		'height':state.h-40
 	})
 	
-	create_buttons(state)
+	build_buttons(state)
 }
 
 function load_strokes(state) {
@@ -188,17 +209,7 @@ function load_strokes(state) {
 	//state.stroke_paths.push();
 }
 
-function init_map(state) {
-	var myStyles =[
-		{
-			featureType: "poi",
-			elementType: "labels",
-			stylers: [
-				  { visibility: "off" }
-			]
-		}
-	];
-
+function update_geolocation(state) {
 	if (navigator.geolocation) {
 		// geolocation is available
 		navigator.geolocation.getCurrentPosition(
@@ -224,6 +235,20 @@ function init_map(state) {
 		console.log('NO GEOLOCATION')
 		// geolocation is not supported
 	}
+}
+
+function init_map(state) {
+	var myStyles =[
+		{
+			featureType: "poi",
+			elementType: "labels",
+			stylers: [
+				  { visibility: "off" }
+			]
+		}
+	];
+
+	update_geolocation(state)
 
 	var mapOptions = {
 		center:new google.maps.LatLng(state.lat, state.lng), zoom:18,
@@ -274,14 +299,24 @@ function finish_stroke(state) {
 		).done(function(){
 			console.log('ya dat stroke got thru');
 		});*/
-			
+}
+
+function add_stroke(stroke) {
+	
 }
 
 function build_stroke(state,e) {
+	// this might not be the right place for this, 
+	// bc it might not update to often
+	
+
 	lat = e.latLng.lat()
 	lng = e.latLng.lng()
 	d = distance(lat,lng,state.lat, state.lng)
 	if (state.pointer == 'down' && state.mode == 'draw' && d < state.rad) {
+		// when starting a new stroke, update geolocation
+		if (state.curr_stroke.path.length == 0) update_geolocation(state);
+
 		state.curr_stroke.path.push({lat: lat, lng: lng})
 	}
 	if (d >= state.rad) {
