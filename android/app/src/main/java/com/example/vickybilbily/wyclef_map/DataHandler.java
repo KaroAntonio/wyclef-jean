@@ -53,7 +53,7 @@ public class DataHandler {
         }
     }
 
-    public void subscribeToStrokes(float lat, float lng, final StrokeListener listener) {
+    public void subscribeToStrokes(double lat, double lng, final StrokeListener listener) {
         if (geoQuery != null) {
             geoQuery.removeAllListeners();
         }

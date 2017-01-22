@@ -361,6 +361,13 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onLocationChanged(Location location) {
         handleLocation();
+//        dataHandler.subscribeToStrokes(location.getLatitude(), location.getLongitude(), new DataHandler.StrokeListener() {
+//            @Override
+//            public void onStroke(Stroke stroke) {
+//                mStrokeList.add(stroke);
+//                redrawMap();
+//            }
+//        });
     }
 
 }

@@ -23,10 +23,10 @@ public class Stroke {
     public long timestamp;
 
     public class Coord{
-        public float lat;
-        public float lng;
+        public double lat;
+        public double lng;
 
-        public Coord(float lat, float lng){
+        public Coord(double lat, double lng){
             this.lat = lat;
             this.lng = lng;
         }
@@ -38,7 +38,7 @@ public class Stroke {
         this.color = "#" + Integer.toHexString(options.getColor()).substring(2);
         this.path = new ArrayList<>();
         for (LatLng l : options.getPoints()){
-            this.path.add(new Coord((float)l.latitude, (float)l.longitude));
+            this.path.add(new Coord(l.latitude, l.longitude));
         }
         this.timestamp =  System.currentTimeMillis() / 1000L;
     }
