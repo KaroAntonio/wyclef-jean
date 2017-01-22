@@ -1,5 +1,6 @@
 package com.example.vickybilbily.wyclef_map;
 
+import android.graphics.Color;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -20,6 +21,7 @@ public class Stroke {
     private String color;
     private String type;
     private String[] tags;
+    public long timestamp;
 
     public class Coord{
         private float lat;
@@ -40,12 +42,14 @@ public class Stroke {
             coords.add(new Coord((float)l.latitude, (float)l.longitude));
         }
         this.path = coords.toArray(new Coord[coords.size()]);
+        this.timestamp =  System.currentTimeMillis() / 1000L;
     }
 
     public PolylineOptions getPolylineOptions(){
         PolylineOptions options = new PolylineOptions()
                 .width(this.weight)
-                .color(Integer.parseInt(this.color.split("#")[1],16));
+                .color(Color.RED);
+                //.color(Integer.parseInt(this.color.split("#")[1],16));
         for (Coord c : this.path){
             options.add(new LatLng(c.lat, c.lng));
         }
