@@ -28,6 +28,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -59,7 +60,7 @@ public class MapsActivity extends FragmentActivity implements
     private DataHandler dataHandler;
     private int mColor;
     private ColorPicker mColorPicker;
-    private final double MAX_RADIUS = 0.01;
+    private final double MAX_RADIUS = 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -182,6 +183,7 @@ public class MapsActivity extends FragmentActivity implements
 
             if (mLocation != null) {
                 mMap.addMarker(new MarkerOptions().position(new LatLng(mLocation.getLatitude(), mLocation.getLongitude())).title("YOU"));
+                mMap.addCircle(new CircleOptions().radius(MAX_RADIUS).strokeColor(Color.LTGRAY).center(new LatLng(mLocation.getLatitude(), mLocation.getLongitude())));
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()), 15));
                 mProjection = mMap.getProjection();
             }
@@ -195,7 +197,8 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onDown(MotionEvent event) {
         LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
-        if (distance(position.latitude, position.longitude, mLocation.getLatitude(), mLocation.getLongitude()) < MAX_RADIUS) {
+        if (position != null &&
+                distance(position.latitude, position.longitude, mLocation.getLatitude(), mLocation.getLongitude()) < MAX_RADIUS) {
             mPolylineOptions = new PolylineOptions()
                     .add(position)
                     .color(mColor)
@@ -208,7 +211,8 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onMove(MotionEvent event) {
         LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
-        if (distance(position.latitude, position.longitude, mLocation.getLatitude(), mLocation.getLongitude()) < MAX_RADIUS) {
+        if (position != null &&
+                distance(position.latitude, position.longitude, mLocation.getLatitude(), mLocation.getLongitude()) < MAX_RADIUS) {
             mPolylineOptions.add(position);
             mPolylineList.add(mMap.addPolyline(mPolylineOptions));
         }
@@ -218,7 +222,8 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onUp(MotionEvent event) {
         LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
-        if (distance(position.latitude, position.longitude, mLocation.getLatitude(), mLocation.getLongitude()) < MAX_RADIUS) {
+        if (position != null &&
+                distance(position.latitude, position.longitude, mLocation.getLatitude(), mLocation.getLongitude()) < MAX_RADIUS) {
             mPolylineOptions.add(position);
             Polyline newLine = mMap.addPolyline(mPolylineOptions);
             mPolylineList.clear();
@@ -239,8 +244,16 @@ public class MapsActivity extends FragmentActivity implements
         }
     }
 
-    public double distance(double x1, double y1, double x2, double y2) {
-        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+    public double distance(double lat1, double lng1, double lat2, double lng2) {
+        double earthRadius = 6371000; //meters
+        double dLat = Math.toRadians(lat2-lat1);
+        double dLng = Math.toRadians(lng2-lng1);
+        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLng/2) * Math.sin(dLng/2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        float dist = (float) (earthRadius * c);
+        return dist;
     }
 
     public void enableDrawing() {
@@ -320,6 +333,8 @@ public class MapsActivity extends FragmentActivity implements
 
     public void redrawMap() {
         mMap.clear();
+        mMap.addMarker(new MarkerOptions().position(new LatLng(mLocation.getLatitude(), mLocation.getLongitude())).title("YOU"));
+        mMap.addCircle(new CircleOptions().radius(MAX_RADIUS).strokeWidth(5).strokeColor(Color.LTGRAY).center(new LatLng(mLocation.getLatitude(), mLocation.getLongitude())));
         for (Stroke s : mStrokeList) {
             mMap.addPolyline(s.getPolylineOptions());
         }
