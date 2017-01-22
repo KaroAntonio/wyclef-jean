@@ -214,8 +214,14 @@ function load_strokes(state) {
 }
 
 function add_stroke(stroke) {
-	state.stroke_paths.push(stroke)
-	update_strokes(state);
+	if (stroke) {
+		state.stroke_paths.push(stroke)
+		update_strokes(state);
+		///console.log(stroke)
+		console.log(state.stroke_paths.length)
+	} else {
+		console.log('received stroke is null!')
+	}
 }
 
 function update_geolocation(state, center_on_success) {
