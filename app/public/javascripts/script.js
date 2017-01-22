@@ -15,7 +15,7 @@ $(document).ready(function() {
 			'stroke_weight':2,
 			'pointer':'up',
 			'stroke_paths':{},  // data for strokes
-			'strokes':[],  // references to gmaps strokes
+			'strokes':{},  // references to gmaps strokes
 			'mode':'draw',
 			'lat':43.657283,
 			'lng':-79.395747,
@@ -210,7 +210,6 @@ function update_window(state) {
 
 function add_stroke(stroke) {
 	if (stroke) {
-		console.log(stroke.id)
 		if (!(stroke.id in state.stroke_paths)){
 			state.stroke_paths[stroke.id] = stroke
 			update_strokes(state);
@@ -300,8 +299,6 @@ function finish_stroke(state) {
 	var curr_stroke = state.curr_stroke;
 	if (curr_stroke.path.length == 0) return;
 	state.curr_stroke = init_stroke(state)
-	console.log('CURR STROKE')
-	console.log(state.curr_stroke)
 	state['pointer'] = 'up';
 
 	// Build stroke pkg
@@ -332,11 +329,9 @@ function build_stroke(state,e) {
 
 		state.curr_stroke.path.push({lat: lat, lng: lng})
 
-		// update math
+		// update map
 		if('curr_stroke_obj' in state) state['curr_stroke_obj'].setMap(null)
 		state['curr_stroke_obj'] = build_stroke_path(state, state.curr_stroke)
-
-		state.strokes.push(state.curr_stroke_obj)	
 
 		state.curr_stroke_obj.setMap(state.map);
 
@@ -362,7 +357,9 @@ function update_strokes(state) {
 	// REDRAW all strokes
 	for(var id in state.stroke_paths){
 		stroke = state.stroke_paths[id]
-		draw_stroke(state,stroke)
+		if ( !(id in state.strokes)) {
+			draw_stroke(state,stroke)
+		}
 	}
 	draw_stroke(state,state.curr_stroke)
 }
@@ -380,8 +377,7 @@ function build_stroke_path(state,stroke) {
 
 function draw_stroke(state, stroke) {
 	path = build_stroke_path(state,stroke)
-	state.strokes.push(path)	
-
+	state.strokes[stroke.id] = path
 	path.setMap(state.map);
 }
 
