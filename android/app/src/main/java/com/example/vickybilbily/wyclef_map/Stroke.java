@@ -1,5 +1,7 @@
 package com.example.vickybilbily.wyclef_map;
 
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -43,7 +45,7 @@ public class Stroke {
     public PolylineOptions getPolylineOptions(){
         PolylineOptions options = new PolylineOptions()
                 .width(this.weight)
-                .color(Integer.parseInt(this.color.split("#")[0],16));
+                .color(Integer.parseInt(this.color.split("#")[1],16));
         for (Coord c : this.path){
             options.add(new LatLng(c.lat, c.lng));
         }

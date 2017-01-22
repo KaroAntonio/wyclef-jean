@@ -57,6 +57,7 @@ public class MapsActivity extends FragmentActivity implements
     private List<Stroke> mStrokeList;
     private int mColor;
     private ColorPicker mColorPicker;
+    private final double MAX_RADIUS = 0.01;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,6 +128,7 @@ public class MapsActivity extends FragmentActivity implements
         mMap.setMyLocationEnabled(true);
         mProjection = mMap.getProjection();
         setupRadio();
+        setupUndo();
     }
 
     protected void onStart() {
@@ -189,49 +191,39 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onDown(MotionEvent event) {
         LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
-        mPolylineOptions = new PolylineOptions()
-                .add(position)
-                .color(mColor)
-                .width(10);
-        mPolylineList.add(mMap.addPolyline(mPolylineOptions));
+        if (distance(position.latitude, position.longitude, mLocation.getLatitude(), mLocation.getLongitude()) < MAX_RADIUS) {
+            mPolylineOptions = new PolylineOptions()
+                    .add(position)
+                    .color(mColor)
+                    .width(10);
+            mPolylineList.add(mMap.addPolyline(mPolylineOptions));
+        }
         //mMap.addCircle(new CircleOptions().center(position).radius(10));
     }
 
     @Override
     public void onMove(MotionEvent event) {
         LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
-        mPolylineOptions.add(position);
-        mPolylineList.add(mMap.addPolyline(mPolylineOptions));
+        if (distance(position.latitude, position.longitude, mLocation.getLatitude(), mLocation.getLongitude()) < MAX_RADIUS) {
+            mPolylineOptions.add(position);
+            mPolylineList.add(mMap.addPolyline(mPolylineOptions));
+        }
         //mMap.addCircle(new CircleOptions().center(position).radius(10));
     }
 
     @Override
     public void onUp(MotionEvent event) {
         LatLng position = mProjection.fromScreenLocation(new Point((int) event.getX(), (int) event.getY()));
-        mPolylineOptions.add(position);
-        Polyline newLine = mMap.addPolyline(mPolylineOptions);
-        mPolylineList.clear();
-        mStrokeList.add(new Stroke(mPolylineOptions, "currentUid"));
+        if (distance(position.latitude, position.longitude, mLocation.getLatitude(), mLocation.getLongitude()) < MAX_RADIUS) {
+            mPolylineOptions.add(position);
+            Polyline newLine = mMap.addPolyline(mPolylineOptions);
+            mPolylineList.clear();
+            mStrokeList.add(new Stroke(mPolylineOptions, "currentUid"));
+        }
     }
 
-    public void setupRadio() {
-        RadioGroup rg = (RadioGroup) findViewById(R.id.modes);
-        RadioButton drawBtn = (RadioButton) findViewById(R.id.draw);
-        drawBtn.setChecked(true);
-        rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                switch (checkedId) {
-                    case R.id.draw:
-                        enableDrawing();
-                        break;
-                    case R.id.move:
-                        enableMoving();
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
+    public double distance(double x1, double y1, double x2, double y2) {
+        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
     }
 
     public void enableDrawing() {
@@ -254,6 +246,26 @@ public class MapsActivity extends FragmentActivity implements
         settings.setMyLocationButtonEnabled(true);
     }
 
+    public void setupRadio() {
+        RadioGroup rg = (RadioGroup) findViewById(R.id.modes);
+        RadioButton drawBtn = (RadioButton) findViewById(R.id.draw);
+        drawBtn.setChecked(true);
+        rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                switch (checkedId) {
+                    case R.id.draw:
+                        enableDrawing();
+                        break;
+                    case R.id.move:
+                        enableMoving();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+    }
+
     public void setupColorPicker() {
         View colorBtn = findViewById(R.id.colors);
         colorBtn.setOnClickListener(new View.OnClickListener() {
@@ -274,6 +286,26 @@ public class MapsActivity extends FragmentActivity implements
                 mColorPicker.show();
             }
         });
+    }
+
+    public void setupUndo() {
+        View undoBtn = findViewById(R.id.undo);
+        undoBtn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Log.d("action", Integer.toString(mStrokeList.size()));
+                if (mStrokeList.size() > 0) {
+                    mStrokeList.remove(mStrokeList.size() - 1);
+                    redrawMap();
+                }
+            }
+        });
+    }
+
+    public void redrawMap() {
+        mMap.clear();
+        for (Stroke s : mStrokeList) {
+            mMap.addPolyline(s.getPolylineOptions());
+        }
     }
 
     @Override
