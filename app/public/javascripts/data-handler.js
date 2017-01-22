@@ -41,7 +41,7 @@ function subscribeToStrokes(loc, listener) {
             var user = firebase.auth().currentUser;
             var strokeRef = database.ref('users/' + user.uid + '/strokes/' + strokeId);
             strokeRef.on('value', function(snapshot){
-                console.log(strokeId);
+                //console.log(strokeId);
                 listener(snapshot.val());
             });
         }

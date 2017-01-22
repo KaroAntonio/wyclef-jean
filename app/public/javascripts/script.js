@@ -234,7 +234,7 @@ function update_geolocation(state, center_on_success) {
 				center_map(state)
 			
 			subscribeToStrokes(state, function(stroke) {
-				console.log(stroke);
+				//console.log(stroke);
 			});
 		}
 
@@ -309,7 +309,7 @@ function finish_stroke(state) {
 		'stroke_weight':curr_stroke.weight
 	}
 	update_strokes(state)
-	saveStroke(stroke_data);		
+	//saveStroke(stroke_data);		
 }
 
 function build_stroke(state,e) {
