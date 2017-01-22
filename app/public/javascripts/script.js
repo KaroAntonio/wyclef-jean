@@ -222,7 +222,9 @@ function update_geolocation(state) {
 			state.map.setOptions({
 				center:new google.maps.LatLng(state.lat, state.lng)
 			})
-			getStrokes(state, state.rad);
+			subscribeToStrokes(state, function(stroke) {
+				console.log(stroke);
+			});
 		}
 
 		function geo_error(err) {
