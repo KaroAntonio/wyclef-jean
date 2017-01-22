@@ -1,8 +1,8 @@
-let database = firebase.database();
-let geoFire = new GeoFire(database.ref('stroke_geo'));
+var database = firebase.database();
+var geoFire = new GeoFire(database.ref('stroke_geo'));
 
 function saveStroke(stroke) {
-    let user = firebase.auth().currentUser;
+    var user = firebase.auth().currentUser;
     if (user) {
         var strokesRef = database.ref('users/' + user.uid + '/strokes').push(stroke);
 
