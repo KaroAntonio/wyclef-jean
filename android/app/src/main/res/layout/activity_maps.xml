@@ -35,6 +35,12 @@
             android:layout_height="wrap_content"
             android:id="@+id/colors" />
 
+        <Button
+            android:text="Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/undo" />
+
         <RadioGroup
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
