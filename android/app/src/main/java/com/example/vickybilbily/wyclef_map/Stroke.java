@@ -54,7 +54,7 @@ public class Stroke {
     public PolylineOptions getPolylineOptions() {
         PolylineOptions options = new PolylineOptions()
                 .width(this.weight)
-                .color(Color.RED);
+                .color(Color.parseColor(this.color));
         //.color(Integer.parseInt(this.color.split("#")[1],16));
         for (Coord c : this.path) {
             options.add(new LatLng(c.lat, c.lng));
