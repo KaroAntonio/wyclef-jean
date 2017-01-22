@@ -31,9 +31,7 @@ function subscribeToStrokes(loc, listener) {
         center: locToArr(loc),
         radius: loc.rad * (40076 / 360)
     });
-    geoQuery.on("ready", function() {
-        console.log("GeoQuery has loaded and fired all other events for initial data");
-    });
+
     var strokesRecieved = [];
     geoQuery.on("key_entered", function(key, location, distance) {
         var strokeId = key.substr(0, key.lastIndexOf('-'));
