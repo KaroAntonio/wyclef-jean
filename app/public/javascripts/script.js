@@ -211,10 +211,10 @@ function update_window(state) {
 function add_stroke(stroke) {
 	if (stroke) {
 		console.log(stroke.id)
-		//state.stroke_paths.push(stroke)
-		update_strokes(state);
-		///console.log(stroke)
-		console.log(state.stroke_paths.length)
+		if (!(stroke.id in state.stroke_paths)){
+			state.stroke_paths[stroke.id] = stroke
+			update_strokes(state);
+		}
 	} else {
 		console.log('received stroke is null!')
 	}
@@ -299,7 +299,6 @@ function finish_stroke(state) {
 	// Finish building stroke
 	var curr_stroke = state.curr_stroke;
 	if (curr_stroke.path.length == 0) return;
-	state.stroke_paths.push(state.curr_stroke);
 	state.curr_stroke = init_stroke(state)
 	console.log('CURR STROKE')
 	console.log(state.curr_stroke)
@@ -315,8 +314,9 @@ function finish_stroke(state) {
 		'color': curr_stroke.color,
 		'weight': curr_stroke.weight
 	}
+	stroke = saveStroke(stroke_data);		
+	state.stroke_paths[stroke.id] = stroke
 	update_strokes(state)
-	saveStroke(stroke_data);		
 }
 
 function build_stroke(state,e) {
