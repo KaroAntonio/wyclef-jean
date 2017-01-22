@@ -2,41 +2,40 @@ var state;
 
 $(document).ready(function() {
 	firebase.auth().onAuthStateChanged(function(user) {
-	  if (!user) {
+	  if (user) {
+  		$('#loading').hide();
+
+		// app state (global object)
+		state = {
+			'tags':['kanye was here'],
+			'stroke_type':'solid',
+			'user_id': user.uid,
+			'stroke_color':'#000000',
+			'stroke_weight':2,
+			'pointer':'up',
+			'stroke_paths':[],  // data for strokes
+			'strokes':[],  // references to gmaps strokes
+			'mode':'draw',
+			'lat':43.657283,
+			'lng':-79.395747,
+			'rad':0.002
+		}
+
+		update_window(state);
+
+		map = init_map(state);
+		build_buttons(state);
+		state['curr_stroke'] = init_stroke(state)
+		$(window).resize(function() {
+			update_window(state);
+		})
+
+		load_strokes(state);
+		update_strokes(state);
+	  } else {
 	    document.location.href = '/login.html';
 	  }
 	});
-	$('#loading').hide();
-	
-	// app state (global object)
-	state = {
-		'tags':['kanye was here'],
-		'stroke_type':'solid',
-		'user_id':0,
-		'stroke_color':'#000000',
-		'stroke_weight':2,
-		'pointer':'up',
-		'stroke_paths':[],  // data for strokes
-		'strokes':[],  // references to gmaps strokes
-		'mode':'draw',
-		'lat':43.657283,
-		'lng':-79.395747,
-		'rad':0.002
-	}
-
-	update_window(state);
-
-	$(window).resize(function() {
-		update_window(state);
-	})
-
-	map = init_map(state);
-	build_buttons(state);
-	state['curr_stroke'] = init_stroke(state)
-
-	load_strokes(state);
-	update_strokes(state);
-
 })
 
 function extract_tag(state) {
@@ -223,6 +222,7 @@ function update_geolocation(state) {
 			state.map.setOptions({
 				center:new google.maps.LatLng(state.lat, state.lng)
 			})
+			getStrokes(state, state.rad);
 		}
 
 		function geo_error(err) {
@@ -285,24 +285,11 @@ function finish_stroke(state) {
 		'path_coords':curr_stroke.path,
 		'stroke_type':curr_stroke.type,
 		'tags':curr_stroke.tags,
-		'author_id':curr_stroke.user_id,
 		'timestamp':Date.now(),
 		'stroke_color':curr_stroke.color,
 		'stroke_weight':curr_stroke.weight
 	}
-	
-	// Post stroke	
-	/*
-	$.post(
-		'url',
-		curr_stroke
-		).done(function(){
-			console.log('ya dat stroke got thru');
-		});*/
-}
-
-function add_stroke(stroke) {
-	
+	saveStroke(stroke_data);		
 }
 
 function build_stroke(state,e) {
