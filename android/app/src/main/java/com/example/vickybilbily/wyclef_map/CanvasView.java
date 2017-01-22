@@ -14,7 +14,7 @@ import android.view.View;
  */
 
 public class CanvasView extends View {
-    
+
     private MotionListener listener;
 
     public CanvasView(Context context, AttributeSet attrs) {

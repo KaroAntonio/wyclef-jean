@@ -165,9 +165,8 @@ public class MapsActivity extends FragmentActivity implements
             mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
             if (mLocation != null) {
-                Log.d("location", Double.toString(mLocation.getLongitude()));
-                mMap.addMarker(new MarkerOptions().position(new LatLng(mLocation.getLatitude(), mLocation.getLongitude())).title("HERE"));
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()), 15));
+                mMap.addMarker(new MarkerOptions().position(new LatLng(mLocation.getLatitude(), mLocation.getLongitude())).title("YOU"));
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()), 15));
                 mProjection = mMap.getProjection();
             }
         }
