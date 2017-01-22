@@ -133,7 +133,7 @@ public class MapsActivity extends FragmentActivity implements
         mMap.setMyLocationEnabled(true);
         mProjection = mMap.getProjection();
         setupRadio();
-        setupUndo();
+        //setupUndo();
     }
 
     protected void onStart() {
