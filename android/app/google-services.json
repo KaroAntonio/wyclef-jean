@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "528428252791",
+    "firebase_url": "https://wyclef-jean-2655d.firebaseio.com",
+    "project_id": "wyclef-jean-2655d",
+    "storage_bucket": "wyclef-jean-2655d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:528428252791:android:c137be9c120d62b4",
+        "android_client_info": {
+          "package_name": "com.example.vickybilbily.wyclef_map"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "528428252791-1n948kb2vbrevkbtondri58qsk16823g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2q3Fcr4lnyNzrGi_3NwF7dqgbnYHklvA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
