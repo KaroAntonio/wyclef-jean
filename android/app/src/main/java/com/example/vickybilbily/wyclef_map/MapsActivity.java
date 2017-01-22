@@ -170,8 +170,7 @@ public class MapsActivity extends FragmentActivity implements
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-        }
-        else {
+        } else {
             Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
             if (location == null) {
                 LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
@@ -194,6 +193,13 @@ public class MapsActivity extends FragmentActivity implements
                 mMap.addCircle(new CircleOptions().radius(MAX_RADIUS).strokeColor(Color.LTGRAY).center(new LatLng(mLocation.getLatitude(), mLocation.getLongitude())));
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()), 15));
                 mProjection = mMap.getProjection();
+                dataHandler.subscribeToStrokes(mLocation.getLatitude(), mLocation.getLongitude(), new DataHandler.StrokeListener() {
+                    @Override
+                    public void onStroke(Stroke stroke) {
+                        mStrokeList.add(stroke);
+                        redrawMap();
+                    }
+                });
             }
         }
         //Request location permission
@@ -254,12 +260,12 @@ public class MapsActivity extends FragmentActivity implements
 
     public double distance(double lat1, double lng1, double lat2, double lng2) {
         double earthRadius = 6371000; //meters
-        double dLat = Math.toRadians(lat2-lat1);
-        double dLng = Math.toRadians(lng2-lng1);
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                 Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLng/2) * Math.sin(dLng/2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         float dist = (float) (earthRadius * c);
         return dist;
     }
@@ -361,13 +367,6 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onLocationChanged(Location location) {
         handleLocation();
-//        dataHandler.subscribeToStrokes(location.getLatitude(), location.getLongitude(), new DataHandler.StrokeListener() {
-//            @Override
-//            public void onStroke(Stroke stroke) {
-//                mStrokeList.add(stroke);
-//                redrawMap();
-//            }
-//        });
     }
 
 }
