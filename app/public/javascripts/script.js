@@ -7,13 +7,14 @@ $(document).ready(function() {
 
 		// app state (global object)
 		state = {
+			'update_locked':false,
 			'tags':['kanye was here'],
 			'stroke_type':'solid',
 			'user_id': user.uid,
 			'stroke_color':'#000000',
 			'stroke_weight':2,
 			'pointer':'up',
-			'stroke_paths':[],  // data for strokes
+			'stroke_paths':{},  // data for strokes
 			'strokes':[],  // references to gmaps strokes
 			'mode':'draw',
 			'lat':43.657283,
@@ -26,7 +27,6 @@ $(document).ready(function() {
 		map = init_map(state);
 		build_buttons(state);
 		state['curr_stroke'] = init_stroke(state)
-		load_strokes(state);
 		update_strokes(state);
 		build_slider(state)
 
@@ -208,14 +208,10 @@ function update_window(state) {
 	build_buttons(state)
 }
 
-function load_strokes(state) {
-	// LOAD STROKES
-	//state.stroke_paths.push();
-}
-
 function add_stroke(stroke) {
 	if (stroke) {
-		state.stroke_paths.push(stroke)
+		console.log(stroke.id)
+		//state.stroke_paths.push(stroke)
 		update_strokes(state);
 		///console.log(stroke)
 		console.log(state.stroke_paths.length)
@@ -225,32 +221,36 @@ function add_stroke(stroke) {
 }
 
 function update_geolocation(state, center_on_success) {
-	if (navigator.geolocation) {
-		// geolocation is available
-		navigator.geolocation.getCurrentPosition(
-			geo_success,
-			geo_error,
-			{maximumAge:600000, timeout:10000})
-		
-		function geo_success(pos){
-			state.lat = pos.coords.latitude
-			state.lng = pos.coords.longitude
-
-			if (center_on_success) 
-				center_map(state)
+	if (!state.update_locked) {
+		if (navigator.geolocation) {
+			// geolocation is available
+			navigator.geolocation.getCurrentPosition(
+				geo_success,
+				geo_error,
+				{maximumAge:600000, timeout:10000})
 			
-			subscribeToStrokes(state, add_stroke);
-		}
+			function geo_success(pos){
+				state.lat = pos.coords.latitude
+				state.lng = pos.coords.longitude
 
-		function geo_error(err) {
-			// TODO make a better error
-			console.log('GEO LOCATION ERROR');
-			console.log(err);
+				if (center_on_success) 
+					center_map(state)
+				
+				subscribeToStrokes(state, add_stroke);
+				state['update_locked'] = true
+				setInterval(function(){state.update_locked = false},30000)
+			}
+
+			function geo_error(err) {
+				// TODO make a better error
+				console.log('GEO LOCATION ERROR');
+				console.log(err);
+			}
+		} 
+		else {
+			console.log('NO GEOLOCATION')
+			// geolocation is not supported
 		}
-	} 
-	else {
-		console.log('NO GEOLOCATION')
-		// geolocation is not supported
 	}
 }
 
@@ -360,9 +360,10 @@ function update_strokes(state) {
 	}
 
 	// REDRAW all strokes
-	state.stroke_paths.forEach(function(stroke) {
+	for(var id in state.stroke_paths){
+		stroke = state.stroke_paths[id]
 		draw_stroke(state,stroke)
-	});
+	}
 	draw_stroke(state,state.curr_stroke)
 }
 
