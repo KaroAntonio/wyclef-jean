@@ -31,6 +31,7 @@ $(document).ready(function() {
 		state['curr_stroke'] = init_stroke(state)
 		update_strokes(state);
 		build_slider(state)
+		update_window(state)
 
 		$(window).resize(function() {
 			update_window(state);
@@ -41,6 +42,27 @@ $(document).ready(function() {
 	  }
 	});
 })
+
+function disableScroll() {
+	$('html').css({
+		'overflow':'hidden'
+	})
+	$('body').css({
+		touchAction:'none',
+		position:'fixed',
+		height:'100%',
+		weight:'100%',
+		'overflow-y':'hidden'
+	})
+
+	$('body').on('touchmove',function(e){e.preventDefault();}, false);
+
+	if (window.addEventListener) // older FF
+		window.addEventListener('DOMMouseScroll', preventDefault, false);
+	window.onwheel = preventDefault; // modern standard
+	window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
+	window.ontouchmove  = preventDefault; // mobile
+}
 
 function extract_tag(state) {
 	// extract the tag from the input 
@@ -69,6 +91,7 @@ function build_slider(state) {
 	});
 	$('.nstSlider').css({
 		'position':'fixed',
+		'display':'none'
 	})
 
 	$('#highlightRangeButton').click(function() {
@@ -103,13 +126,6 @@ function build_buttons(state) {
 	control_panel.attr('id','control-panel')
 	$('body').append(control_panel)
 
-	control_panel.css({
-		cursor:'pointer',
-		'position':'fixed',
-		'left':20,
-		'top':state.h/2 - 100
-	})
-
 	var button_infos = [
 		['draw',draw_click],
 		['move',move_click],
@@ -123,20 +139,29 @@ function build_buttons(state) {
 		button.attr('id',info[0]+'-button')
 		control_panel.append(button)
 		button.css({
-			'width':50,
-			'height':50,
+			fontSize:30,
+			'width':80,
+			'height':80,
 			'opacity':0.3,
 			'color':'white',
 			'background':'black',
 			'text-align':'center'
 		})
 		button.text(info[0])
-		button.click(info[1])
+		//button.click(info[1])
+		button.on('click touchstart',info[1])
 		
 	})
 	
 	$('#draw-button').css({
 		'opacity':1
+	})
+
+	control_panel.css({
+		cursor:'pointer',
+		'position':'fixed',
+		'left':20,
+		'top':state.h/2 - control_panel.height()/2
 	})
 
 	var picker = $('#picker')
@@ -204,6 +229,7 @@ function update_window(state) {
 	state['h'] = window.innerHeight
 
 	$("#map-container").css({
+		'position':'fixed',
 		'margin':'20px',
 		'width':state.w-40,
 		'height':state.h-40
@@ -244,9 +270,10 @@ function update_geolocation(state, center_on_success) {
 					state.lat = pos.coords.latitude
 					state.lng = pos.coords.longitude
 
-					if (center_on_success || !state.initialized) 
+					if (center_on_success || !state.initialized) {
 						center_map(state)
-					console.log('init: '+state.initialized)
+						update_window(state)
+					}
 					state.initialized = true
 
 					subscribeToStrokes(state, add_stroke);
@@ -290,10 +317,14 @@ function init_map(state) {
 		mapTypeId:google.maps.MapTypeId.ROADMAP,
 		styles: myStyles	
 	};
+
 		
 	var map = new google.maps.Map(document.getElementById("map-container"),mapOptions);
 	state['map'] = map;
 
+	$('#map-container').css({
+		'position':'fixed'
+	})
 	update_geolocation(state,true)
 
 	map.addListener('click',function(e) { } );
@@ -398,3 +429,8 @@ function obj_len(obj) {
 	return ctr
 }
 
+function preventDefault(e) {
+	e = e || window.event;
+	if (e.preventDefault) e.preventDefault();
+	e.returnValue = false;  
+}
