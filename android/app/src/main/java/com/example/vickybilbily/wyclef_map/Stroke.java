@@ -19,10 +19,10 @@ public class Stroke {
     public float weight;
     public String color;
     public String type;
-    public String[] tags;
+    public List<String> tags;
     public long timestamp;
 
-    public class Coord {
+    public static class Coord {
         public double lat;
         public double lng;
 
