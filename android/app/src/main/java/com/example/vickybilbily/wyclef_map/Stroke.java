@@ -1,9 +1,6 @@
 package com.example.vickybilbily.wyclef_map;
 
-import android.util.Log;
-
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
@@ -14,16 +11,17 @@ import java.util.List;
  */
 
 public class Stroke {
-    private String user_id;
-    private Coord[] path;
-    private float weight;
-    private String color;
-    private String type;
-    private String[] tags;
+    public String id;
+    public String user_id;
+    public List<Coord> path;
+    public float weight;
+    public String color;
+    public String type;
+    public String[] tags;
 
     public class Coord{
-        private float lat;
-        private float lng;
+        public float lat;
+        public float lng;
 
         public Coord(float lat, float lng){
             this.lat = lat;
@@ -35,11 +33,10 @@ public class Stroke {
         this.user_id = uid;
         this.weight = options.getWidth();
         this.color = "#" + Integer.toHexString(options.getColor()).substring(2);
-        List<Coord> coords = new ArrayList<Coord>();
+        this.path = new ArrayList<Coord>();
         for (LatLng l : options.getPoints()){
-            coords.add(new Coord((float)l.latitude, (float)l.longitude));
+            this.path.add(new Coord((float)l.latitude, (float)l.longitude));
         }
-        this.path = coords.toArray(new Coord[coords.size()]);
     }
 
     public PolylineOptions getPolylineOptions(){

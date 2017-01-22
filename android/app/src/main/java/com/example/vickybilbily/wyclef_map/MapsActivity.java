@@ -33,6 +33,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,6 +56,7 @@ public class MapsActivity extends FragmentActivity implements
     private List<Polyline> mPolylineList;
     private PolylineOptions mPolylineOptions;
     private List<Stroke> mStrokeList;
+    private DataHandler dataHandler;
     private int mColor;
     private ColorPicker mColorPicker;
     private final double MAX_RADIUS = 0.01;
@@ -86,6 +88,8 @@ public class MapsActivity extends FragmentActivity implements
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         }
+
+        dataHandler = new DataHandler();
 
         //Instantiate some stuff
         mPolylineList = new ArrayList<Polyline>();
@@ -218,7 +222,20 @@ public class MapsActivity extends FragmentActivity implements
             mPolylineOptions.add(position);
             Polyline newLine = mMap.addPolyline(mPolylineOptions);
             mPolylineList.clear();
-            mStrokeList.add(new Stroke(mPolylineOptions, "currentUid"));
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user != null) {
+                Stroke stroke = new Stroke(mPolylineOptions, user.getUid());
+                mStrokeList.add(stroke);
+                dataHandler.saveStroke(this, stroke);
+            } else {
+                startActivity(
+                        AuthUI.getInstance()
+                                .createSignInIntentBuilder()
+                                .setProviders(Arrays.asList(new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
+                                        new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build()))
+                                .build());
+            }
+
         }
     }
 
