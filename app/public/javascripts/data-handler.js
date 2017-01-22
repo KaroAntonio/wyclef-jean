@@ -41,7 +41,9 @@ function subscribeToStrokes(loc, listener) {
             strokesRecieved.push(strokeId);
             var strokeRef = database.ref('strokes/' + strokeId);
             strokeRef.on('value', function(snapshot){
-                listener(snapshot.val());
+                var value = snapshot.val();
+                value.id = strokeId;
+                listener(value);
             });
         }
     });
