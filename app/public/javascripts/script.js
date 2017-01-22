@@ -19,7 +19,8 @@ $(document).ready(function() {
 			'mode':'draw',
 			'lat':43.657283,
 			'lng':-79.395747,
-			'rad':0.002
+			'rad':0.002,
+			'd_buff':0.0005  // the tolerance on how much you have to move before a redraw is triggered
 		}
 
 		update_window(state);
@@ -214,6 +215,7 @@ function add_stroke(stroke) {
 			state.stroke_paths[stroke.id] = stroke
 			update_strokes(state);
 		}
+		console.log(obj_len(state.stroke_paths))
 	} else {
 		console.log('received stroke is null!')
 	}
@@ -229,15 +231,23 @@ function update_geolocation(state, center_on_success) {
 				{maximumAge:600000, timeout:10000})
 			
 			function geo_success(pos){
-				state.lat = pos.coords.latitude
-				state.lng = pos.coords.longitude
+				d = distance(pos.coords.latitude, 
+						pos.coords.longitude, 
+						state.lat, 
+						state.lng)
 
-				if (center_on_success) 
-					center_map(state)
-				
-				subscribeToStrokes(state, add_stroke);
-				state['update_locked'] = true
-				setInterval(function(){state.update_locked = false},30000)
+				// only update if the distance moved is greater than the move tolerance
+				if ( d > state.d_buff ) {
+					if (center_on_success) 
+						center_map(state)
+					
+					state.lat = pos.coords.latitude
+					state.lng = pos.coords.longitude
+
+					subscribeToStrokes(state, add_stroke);
+					state['update_locked'] = true
+					setInterval(function(){state.update_locked = false},30000)
+				}
 			}
 
 			function geo_error(err) {
@@ -349,18 +359,15 @@ function distance(x1, y1, x2, y2) {
 function update_strokes(state) {
 
 	// REMOVE existing strokes from map
-	while(state.strokes.length > 0) {
-		state.strokes[0].setMap(null);
-		state.strokes.splice(0,1);
-	}
-
-	// REDRAW all strokes
+	var n_redrawn = 0
 	for(var id in state.stroke_paths){
 		stroke = state.stroke_paths[id]
 		if ( !(id in state.strokes)) {
 			draw_stroke(state,stroke)
+			n_redrawn += 1
 		}
 	}
+	console.log('n_redrawn '+n_redrawn)
 	draw_stroke(state,state.curr_stroke)
 }
 
@@ -379,5 +386,11 @@ function draw_stroke(state, stroke) {
 	path = build_stroke_path(state,stroke)
 	state.strokes[stroke.id] = path
 	path.setMap(state.map);
+}
+
+function obj_len(obj) {
+	var ctr = 0
+	for (key in obj) ctr += 1
+	return ctr
 }
 
