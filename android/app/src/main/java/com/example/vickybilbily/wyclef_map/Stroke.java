@@ -36,7 +36,7 @@ public class Stroke {
         this.user_id = uid;
         this.weight = options.getWidth();
         this.color = "#" + Integer.toHexString(options.getColor()).substring(2);
-        this.path = new ArrayList<Coord>();
+        this.path = new ArrayList<>();
         for (LatLng l : options.getPoints()){
             this.path.add(new Coord((float)l.latitude, (float)l.longitude));
         }
