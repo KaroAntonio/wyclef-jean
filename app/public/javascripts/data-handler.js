@@ -33,11 +33,11 @@ function getStrokes(loc, radius) {
     });
 }
 
-let locToArr = function(obj) {
+var locToArr = function(obj) {
     return [obj.lat, obj.lng];
 }
 
-let arrToLoc = function(arr) {
+var arrToLoc = function(arr) {
     return {
         lat: arr[0],
         lng: arr[1]
