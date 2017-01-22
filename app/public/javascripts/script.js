@@ -233,7 +233,9 @@ function update_geolocation(state, center_on_success) {
 			if (center_on_success) 
 				center_map(state)
 			
-			getStrokes(state, state.rad);
+			subscribeToStrokes(state, function(stroke) {
+				console.log(stroke);
+			});
 		}
 
 		function geo_error(err) {
