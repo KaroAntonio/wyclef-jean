@@ -26,12 +26,14 @@ $(document).ready(function() {
 		map = init_map(state);
 		build_buttons(state);
 		state['curr_stroke'] = init_stroke(state)
+		load_strokes(state);
+		update_strokes(state);
+		build_slider(state)
+
 		$(window).resize(function() {
 			update_window(state);
 		})
 
-		load_strokes(state);
-		update_strokes(state);
 	  } else {
 	    document.location.href = '/login.html';
 	  }
@@ -63,6 +65,10 @@ function build_slider(state) {
 			"panel_selector": ".highlightPanel"
 		}
 	});
+	$('.nstSlider').css({
+		'position':'fixed',
+	})
+
 	$('#highlightRangeButton').click(function() {
 			var highlightMin = Math.random() * 20,
 				highlightMax = highlightMin + Math.random() * 80;
@@ -208,7 +214,11 @@ function load_strokes(state) {
 	//state.stroke_paths.push();
 }
 
-function update_geolocation(state) {
+function add_stroke(stroke) {
+	console.log(stroke)
+}
+
+function update_geolocation(state, center_on_success) {
 	if (navigator.geolocation) {
 		// geolocation is available
 		navigator.geolocation.getCurrentPosition(
@@ -219,9 +229,10 @@ function update_geolocation(state) {
 		function geo_success(pos){
 			state.lat = pos.coords.latitude
 			state.lng = pos.coords.longitude
-			state.map.setOptions({
-				center:new google.maps.LatLng(state.lat, state.lng)
-			})
+
+			if (center_on_success) 
+				center_map(state)
+			
 			getStrokes(state, state.rad);
 		}
 
@@ -237,6 +248,12 @@ function update_geolocation(state) {
 	}
 }
 
+function center_map(state) {
+	state.map.setOptions({
+		center:new google.maps.LatLng(state.lat, state.lng)
+	})
+}
+
 function init_map(state) {
 	var myStyles =[
 		{
@@ -248,8 +265,6 @@ function init_map(state) {
 		}
 	];
 
-	update_geolocation(state)
-
 	var mapOptions = {
 		center:new google.maps.LatLng(state.lat, state.lng), zoom:18,
 		mapTypeId:google.maps.MapTypeId.ROADMAP,
@@ -259,10 +274,12 @@ function init_map(state) {
 	var map = new google.maps.Map(document.getElementById("map-container"),mapOptions);
 	state['map'] = map;
 
+	update_geolocation(state,true)
+
 	map.addListener('click',function(e) { } );
 	map.addListener('mouseup',function(e) { finish_stroke(state) } );
 	map.addListener('mousedown',function(e) { state['pointer'] = 'down'; update_strokes(state) } )
-	map.addListener('mousemove',function(e) { build_stroke(state,e); update_strokes(state) } )
+	map.addListener('mousemove',function(e) { build_stroke(state,e); } )
 
 	map.setOptions({draggable: false, zoomControl: false, scrollwheel: false, disableDoubleClickZoom: true, clickableIcons: false});
 
@@ -289,22 +306,31 @@ function finish_stroke(state) {
 		'stroke_color':curr_stroke.color,
 		'stroke_weight':curr_stroke.weight
 	}
+	update_strokes(state)
 	saveStroke(stroke_data);		
 }
 
 function build_stroke(state,e) {
 	// this might not be the right place for this, 
 	// bc it might not update to often
-	
 
 	lat = e.latLng.lat()
 	lng = e.latLng.lng()
 	d = distance(lat,lng,state.lat, state.lng)
 	if (state.pointer == 'down' && state.mode == 'draw' && d < state.rad) {
 		// when starting a new stroke, update geolocation
-		if (state.curr_stroke.path.length == 0) update_geolocation(state);
+		if (state.curr_stroke.path.length == 0) update_geolocation(state,false);
 
 		state.curr_stroke.path.push({lat: lat, lng: lng})
+
+		// update math
+		if('curr_stroke_obj' in state) state['curr_stroke_obj'].setMap(null)
+		state['curr_stroke_obj'] = build_stroke_path(state, state.curr_stroke)
+
+		state.strokes.push(state.curr_stroke_obj)	
+
+		state.curr_stroke_obj.setMap(state.map);
+
 	}
 	if (d >= state.rad) {
 		// end the current stroke if you draw beyond the edge of the boundary
@@ -331,8 +357,8 @@ function update_strokes(state) {
 	draw_stroke(state,state.curr_stroke)
 }
 
-function draw_stroke(state, stroke) {
-	var path = new google.maps.Polyline({
+function build_stroke_path(state,stroke) {
+	return new google.maps.Polyline({
 		clickable:false,
 		path: stroke.path,
 		geodesic: true,
@@ -341,6 +367,11 @@ function draw_stroke(state, stroke) {
 		strokeWeight: stroke.weight
 	});
 
+
+}
+
+function draw_stroke(state, stroke) {
+	path = build_stroke_path(state,stroke)
 	state.strokes.push(path)	
 
 	path.setMap(state.map);
