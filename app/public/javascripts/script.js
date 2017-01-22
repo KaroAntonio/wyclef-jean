@@ -192,7 +192,6 @@ function build_buttons(state) {
 }
 
 function update_color(jscolor) {
-	console.log(jscolor)
 	state.stroke_color = '#' + jscolor
 }
 
@@ -215,7 +214,8 @@ function load_strokes(state) {
 }
 
 function add_stroke(stroke) {
-	console.log(stroke)
+	state.stroke_paths.push(stroke)
+	update_strokes(state);
 }
 
 function update_geolocation(state, center_on_success) {
@@ -295,20 +295,22 @@ function finish_stroke(state) {
 	if (curr_stroke.path.length == 0) return;
 	state.stroke_paths.push(state.curr_stroke);
 	state.curr_stroke = init_stroke(state)
+	console.log('CURR STROKE')
+	console.log(state.curr_stroke)
 	state['pointer'] = 'up';
 
 	// Build stroke pkg
 	var stroke_data = {
-		'path_coords': curr_stroke.path,
-		'stroke_type': curr_stroke.type,
+		'path': curr_stroke.path,
+		'type': curr_stroke.type,
 		'tags': curr_stroke.tags,
 		'user_id': curr_stroke.user_id,
 		'timestamp': Date.now(),
-		'stroke_color': curr_stroke.color,
-		'stroke_weight': curr_stroke.weight
+		'color': curr_stroke.color,
+		'weight': curr_stroke.weight
 	}
 	update_strokes(state)
-	//saveStroke(stroke_data);		
+	saveStroke(stroke_data);		
 }
 
 function build_stroke(state,e) {

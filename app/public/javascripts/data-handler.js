@@ -7,7 +7,7 @@ function saveStroke(stroke) {
         var strokesRef = database.ref('strokes').push(stroke);
 
         var strokeId = strokesRef.key;
-        var coords = stroke.path_coords.map(locToArr);
+        var coords = stroke.path.map(locToArr);
 
         var geoFireEntry = {};
         for (var i = 0; i < coords.length; i++) {
