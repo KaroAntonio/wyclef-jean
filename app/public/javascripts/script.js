@@ -7,18 +7,21 @@ $(document).ready(function() {
 
 		// app state (global object)
 		state = {
+			'initialized':false,
+			'update_locked':false,
 			'tags':['kanye was here'],
 			'stroke_type':'solid',
 			'user_id': user.uid,
 			'stroke_color':'#000000',
 			'stroke_weight':2,
 			'pointer':'up',
-			'stroke_paths':[],  // data for strokes
-			'strokes':[],  // references to gmaps strokes
+			'stroke_paths':{},  // data for strokes
+			'strokes':{},  // references to gmaps strokes
 			'mode':'draw',
-			'lat':43.657283,
+			'lat':40.657283,
 			'lng':-79.395747,
-			'rad':0.002
+			'rad':0.002,
+			'd_buff':0.0005  // the tolerance on how much you have to move before a redraw is triggered
 		}
 
 		update_window(state);
@@ -26,7 +29,6 @@ $(document).ready(function() {
 		map = init_map(state);
 		build_buttons(state);
 		state['curr_stroke'] = init_stroke(state)
-		load_strokes(state);
 		update_strokes(state);
 		build_slider(state)
 
@@ -208,49 +210,59 @@ function update_window(state) {
 	build_buttons(state)
 }
 
-function load_strokes(state) {
-	// LOAD STROKES
-	//state.stroke_paths.push();
-}
-
 function add_stroke(stroke) {
 	if (stroke) {
-		state.stroke_paths.push(stroke)
-		update_strokes(state);
-		///console.log(stroke)
-		console.log(state.stroke_paths.length)
+		if (!(stroke.id in state.stroke_paths)){
+			state.stroke_paths[stroke.id] = stroke
+			update_strokes(state);
+		}
 	} else {
 		console.log('received stroke is null!')
 	}
 }
 
 function update_geolocation(state, center_on_success) {
-	if (navigator.geolocation) {
-		// geolocation is available
-		navigator.geolocation.getCurrentPosition(
-			geo_success,
-			geo_error,
-			{maximumAge:600000, timeout:10000})
-		
-		function geo_success(pos){
-			state.lat = pos.coords.latitude
-			state.lng = pos.coords.longitude
-
-			if (center_on_success) 
-				center_map(state)
+	if (!state.update_locked) {
+		if (navigator.geolocation) {
+			// geolocation is available
+			navigator.geolocation.getCurrentPosition(
+				geo_success,
+				geo_error,
+				{maximumAge:600000, timeout:10000})
 			
-			subscribeToStrokes(state, add_stroke);
-		}
+			function geo_success(pos){
+				d = distance(pos.coords.latitude, 
+						pos.coords.longitude, 
+						state.lat, 
+						state.lng)
 
-		function geo_error(err) {
-			// TODO make a better error
-			console.log('GEO LOCATION ERROR');
-			console.log(err);
+				// only update if the distance moved is greater than the move tolerance
+				if ( d > state.d_buff ) {
+					
+					state.lat = pos.coords.latitude
+					state.lng = pos.coords.longitude
+
+					if (center_on_success || !state.initialized) 
+						center_map(state)
+					console.log('init: '+state.initialized)
+					state.initialized = true
+
+					subscribeToStrokes(state, add_stroke);
+					state['update_locked'] = true
+					setInterval(function(){state.update_locked = false},30000)
+				}
+			}
+
+			function geo_error(err) {
+				// TODO make a better error
+				console.log('GEO LOCATION ERROR');
+				console.log(err);
+			}
+		} 
+		else {
+			console.log('NO GEOLOCATION')
+			// geolocation is not supported
 		}
-	} 
-	else {
-		console.log('NO GEOLOCATION')
-		// geolocation is not supported
 	}
 }
 
@@ -299,10 +311,7 @@ function finish_stroke(state) {
 	// Finish building stroke
 	var curr_stroke = state.curr_stroke;
 	if (curr_stroke.path.length == 0) return;
-	state.stroke_paths.push(state.curr_stroke);
 	state.curr_stroke = init_stroke(state)
-	console.log('CURR STROKE')
-	console.log(state.curr_stroke)
 	state['pointer'] = 'up';
 
 	// Build stroke pkg
@@ -315,8 +324,9 @@ function finish_stroke(state) {
 		'color': curr_stroke.color,
 		'weight': curr_stroke.weight
 	}
+	stroke = saveStroke(stroke_data);		
+	state.stroke_paths[stroke.id] = stroke
 	update_strokes(state)
-	saveStroke(stroke_data);		
 }
 
 function build_stroke(state,e) {
@@ -332,11 +342,9 @@ function build_stroke(state,e) {
 
 		state.curr_stroke.path.push({lat: lat, lng: lng})
 
-		// update math
+		// update map
 		if('curr_stroke_obj' in state) state['curr_stroke_obj'].setMap(null)
 		state['curr_stroke_obj'] = build_stroke_path(state, state.curr_stroke)
-
-		state.strokes.push(state.curr_stroke_obj)	
 
 		state.curr_stroke_obj.setMap(state.map);
 
@@ -354,15 +362,14 @@ function distance(x1, y1, x2, y2) {
 function update_strokes(state) {
 
 	// REMOVE existing strokes from map
-	while(state.strokes.length > 0) {
-		state.strokes[0].setMap(null);
-		state.strokes.splice(0,1);
+	var n_redrawn = 0
+	for(var id in state.stroke_paths){
+		stroke = state.stroke_paths[id]
+		if ( !(id in state.strokes)) {
+			draw_stroke(state,stroke)
+			n_redrawn += 1
+		}
 	}
-
-	// REDRAW all strokes
-	state.stroke_paths.forEach(function(stroke) {
-		draw_stroke(state,stroke)
-	});
 	draw_stroke(state,state.curr_stroke)
 }
 
@@ -379,8 +386,13 @@ function build_stroke_path(state,stroke) {
 
 function draw_stroke(state, stroke) {
 	path = build_stroke_path(state,stroke)
-	state.strokes.push(path)	
-
+	state.strokes[stroke.id] = path
 	path.setMap(state.map);
+}
+
+function obj_len(obj) {
+	var ctr = 0
+	for (key in obj) ctr += 1
+	return ctr
 }
 
